@@ -1,0 +1,11 @@
+# Input documents. Fetched, SHA-256 verified, never redistributed.
+# The contract is the hash in provenance/treaties.yaml, not the file.
+sources/
+
+# Environment
+.venv/
+__pycache__/
+*.pyc
+
+# OS
+.DS_Store

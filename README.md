@@ -14,9 +14,11 @@ Three layers, three repositories, one contract of fidelity:
 ## Current state: scaffold
 
 No treaties yet. This repository currently holds only its own contract:
-this README, `LICENSE`, and `TDM.md`. That is deliberate — an empty library
-with its rules stated is better than a library with treaties of unknown
-provenance.
+this README, `LICENSE`, `TDM.md`, plus the empty registry
+(`provenance/treaties.yaml`), the per-treaty layout (`treaties/README.md`),
+and the local-only sources rule (`.gitignore`). That is deliberate — an
+empty library with its rules stated is better than a library with treaties
+of unknown provenance.
 
 ## The fidelity contract (what every treaty must bring)
 

@@ -1,0 +1,29 @@
+# The register of every bilateral treaty this library holds.
+#
+# Mirrors the corpus contract (international-tax-law-corpus,
+# provenance/sources.yaml): the hash, not the file, is the contract.
+# The PDFs themselves are NOT redistributed. They are fetched, hashed and
+# read locally under sources/ (gitignored); what is committed here is the
+# hash, the page-anchored extraction, and the declared gaps.
+#
+# A treaty enters only with all of these:
+#   id:        stable slug, "<party-a>-<party-b>-<signature-year>",
+#              e.g. italy-germany-1989. Alphabetical party order.
+#   parties:   the two contracting states, canonical English names.
+#   title:     the treaty's official title, as published.
+#   source:    url (official publisher), sha256 of the exact bytes read,
+#              retrieved date (YYYY-MM-DD), language(s) as published.
+#   rights:    status (public_domain | open_licence |
+#              licence_with_conditions | unknown), redistribute (never true
+#              for source PDFs), note with verification date.
+#   produces:  what is built from this source, and where (artefact path
+#              under treaties/<id>/). A source whose artefact does not exist
+#              yet says so with a reason instead of being absent.
+#   status:    published | in-preparation | unread (with reason — e.g. scanned
+#              images with no extractable text and no OCR in this pipeline).
+#   gaps:      what was declared rather than filled (unread pages, unmeasured
+#              tables), with the reason each artefact gives.
+#
+# No treaties yet. The first entry follows this schema; nothing enters
+# without a hash, pages, and gaps.
+treaties: []
