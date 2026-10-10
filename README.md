@@ -7,9 +7,21 @@ people actually work on, contributed as they go.
 
 Three layers, three repositories, one contract of fidelity:
 
-* **corpus** ([international-tax-law-corpus](https://github.com/avvohacker/international-tax-law-corpus)) — the citable base: UN Model 2017 and 2021 plus the OECD MLI framework. Closed scope, byte-reproducible, every unit traceable to its page.
-* **library (this repository)** — the bilateral treaties people work on, contributed as they go: each treaty enters with the same fidelity contract (source hash, page-anchored units, declared gaps, no invention).
-* **mcp** ([international-tax-law-mcp](https://github.com/avvohacker/international-tax-law-mcp)) — the query mind over corpus plus library: treaty questions answered from the data (as-modified verdicts), never from guesses.
+* **corpus** ([international-tax-law-corpus](https://github.com/avvohacker/international-tax-law-corpus)) — the citable base: UN Model 2017 and 2021 plus the OECD MLI framework. Closed scope, byte-reproducible, every unit traceable to its page. **State**: both editions and every view built, anti-drift control in CI.
+* **library (this repository)** — the bilateral treaties people work on, contributed as they go: each treaty enters with the same fidelity contract (source hash, page-anchored units, declared gaps, no invention). **State**: contract walking — first treaty in (`uk-us-2001`).
+* **mcp** ([international-tax-law-mcp](https://github.com/avvohacker/international-tax-law-mcp)) — the query mind over corpus plus library: treaty questions answered from the data (as-modified verdicts), never from guesses. **State**: scaffold — the server lands once this repository walks.
+
+## Roadmap
+
+1. **Corpus walks** (done) — both Model editions and the MLI layer,
+   byte-reproducible, anti-drift control in CI.
+2. **Library walks** (now) — bilateral treaties enter one by one under the
+   same fidelity contract; the first is in (`uk-us-2001`) as the proof, with
+   fetch + rebuild + contract tests in CI.
+3. **MCP walks** (after) — the server over corpus plus library: as-modified
+   verdicts, citations to units, and silence where the data is silent.
+4. **OECD Model** (later) — a corpus extension once 1–3 walk; excluded today
+   on scope grounds only.
 
 ## Current state: the contract is walking, with one treaty
 
