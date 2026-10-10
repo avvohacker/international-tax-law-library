@@ -11,14 +11,41 @@ Three layers, three repositories, one contract of fidelity:
 * **library (this repository)** — the bilateral treaties people work on, contributed as they go: each treaty enters with the same fidelity contract (source hash, page-anchored units, declared gaps, no invention).
 * **mcp** ([international-tax-law-mcp](https://github.com/avvohacker/international-tax-law-mcp)) — the query mind over corpus plus library: treaty questions answered from the data (as-modified verdicts), never from guesses.
 
-## Current state: scaffold
+## Current state: the contract is walking, with one treaty
 
-No treaties yet. This repository currently holds only its own contract:
-this README, `LICENSE`, `TDM.md`, plus the empty registry
-(`provenance/treaties.yaml`), the per-treaty layout (`treaties/README.md`),
-and the local-only sources rule (`.gitignore`). That is deliberate — an
-empty library with its rules stated is better than a library with treaties
-of unknown provenance.
+First treaty in, as the proof that the contract works: the **US–UK income
+tax convention** (signed 24 July 2001, protocol of 19 July 2002) — the most
+cited bilateral treaty there is, official text published by the US
+Treasury/IRS, fetched and hash-verified like every source of the corpus.
+Registered in `provenance/treaties.yaml` under its own id (`uk-us-2001`),
+with URL, SHA-256, retrieval date, rights note and what it produces.
+
+Built from its bytes, one unit per page anchored to the page it came from:
+`treaties/uk-us-2001/treaty.json` (39 pages, 0 gaps) and its readable view
+`treaty.md`, rendered from the JSON and never edited by hand. Byte-identical
+when rebuilt. The PDF itself is not committed: the hash is the contract
+(`.gitignore` keeps `sources/` out).
+
+The proof is the tests, not the claim (`pytest -q`, 9 tests):
+
+* every registry entry carries the full contract (hash, dates, rights,
+  declared gaps, `redistribute: false`);
+* the fetched bytes match the register's SHA-256;
+* every page of the source is present, in order, exactly once;
+* rebuilding from the same source bytes moves nothing;
+* an empty page would have to declare a gap with a reason — no silent blanks;
+* `treaty.md` is `treaty.json`'s own text, in order — rendered, not edited;
+* every unit's text is what the PDF's own page yields, byte for byte — typed
+  nothing.
+
+Run it:
+
+```bash
+python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
+.venv/bin/python scripts/fetch.py    # download + hash-verify the source PDFs
+.venv/bin/python scripts/build.py    # page-anchored units -> treaties/
+.venv/bin/python -m pytest -q        # the contract, as tests
+```
 
 ## The fidelity contract (what every treaty must bring)
 

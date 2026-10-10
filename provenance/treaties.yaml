@@ -8,7 +8,7 @@
 #
 # A treaty enters only with all of these:
 #   id:        stable slug, "<party-a>-<party-b>-<signature-year>",
-#              e.g. italy-germany-1989. Alphabetical party order.
+#              alphabetical party order.
 #   parties:   the two contracting states, canonical English names.
 #   title:     the treaty's official title, as published.
 #   source:    url (official publisher), sha256 of the exact bytes read,
@@ -24,6 +24,45 @@
 #   gaps:      what was declared rather than filled (unread pages, unmeasured
 #              tables), with the reason each artefact gives.
 #
-# No treaties yet. The first entry follows this schema; nothing enters
-# without a hash, pages, and gaps.
-treaties: []
+# Nothing enters without a hash, pages, and gaps.
+treaties:
+  - id: uk-us-2001
+    parties:
+      - United Kingdom of Great Britain and Northern Ireland
+      - United States of America
+    title: >-
+      Convention between the Government of the United States of America and
+      the Government of the United Kingdom of Great Britain and Northern
+      Ireland for the Avoidance of Double Taxation and the Prevention of
+      Fiscal Evasion with respect to Taxes on Income, signed 24 July 2001,
+      with protocol signed 19 July 2002
+    source:
+      url: https://home.treasury.gov/system/files/131/Treaty-UK-7-24-2001.pdf
+      publisher: United States Department of the Treasury / Internal Revenue Service
+      sha256: 08788d92f1ad8e900850d14e8dcbdd8597f00b205fbba6a65d3fba999c82300a
+      retrieved: 2026-10-10
+      verified: 2026-10-10
+      languages:
+        - English
+      pages: 39
+    rights:
+      status: public_domain
+      redistribute: false
+      note: >-
+        Official text of a treaty to which the United States is a party,
+        published by the U.S. Treasury/IRS; as a work of the U.S. Government
+        not subject to domestic copyright (17 U.S.C. 105). The PDF is still
+        fetched, hashed and read locally rather than committed. Verified
+        against the direct link published on the IRS "United Kingdom (UK)
+        tax treaty documents" page on 2026-10-10.
+    produces:
+      - artefact: treaties/uk-us-2001/treaty.json
+        how: >-
+          scripts/build.py reads the fetched PDF as one unit per page, each
+          anchored to its page number, and writes treaty.json;
+          tests/test_treaty.py rebuilds it and compares byte for byte.
+      - artefact: treaties/uk-us-2001/treaty.md
+        how: >-
+          rendered from treaty.json by scripts/build.py, never edited by hand.
+    status: published
+    gaps: []

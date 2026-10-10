@@ -1,11 +1,7 @@
-# Input documents. Fetched, SHA-256 verified, never redistributed.
-# The contract is the hash in provenance/treaties.yaml, not the file.
+# The source PDFs are fetched, hashed and read locally — never committed.
+# The hash in provenance/sources.yaml is the contract.
 sources/
-
-# Environment
-.venv/
 __pycache__/
 *.pyc
-
-# OS
+.venv/
 .DS_Store

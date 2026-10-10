@@ -10,10 +10,11 @@ treaties/<id>/
   treaty.md    — the readable view, rendered from treaty.json, never edited
 ```
 
-No directories yet. A treaty appears here only together with its
-`provenance/treaties.yaml` entry (source hash, rights note, gaps); the
-directory without the registry entry — or the entry without the directory —
-is an error, not a half-published treaty.
+One treaty here: `uk-us-2001/` (US–UK income tax convention, 2001). A
+treaty appears only together with its `provenance/treaties.yaml` entry
+(source hash, rights note, gaps); the directory without the registry entry
+— or the entry without the directory — is an error, not a half-published
+treaty.
 
 Source PDFs live under `sources/` (local only, gitignored) and are never
 committed.
