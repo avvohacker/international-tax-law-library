@@ -1,0 +1,89 @@
+name: library-drift
+
+# The library's half of the same anti-drift control the corpus runs
+# (international-tax-law-corpus, .github/workflows/corpus-drift.yml), kept
+# deliberately simpler because this repository has one writer, not a harness:
+#
+#   1. fetch - download exactly the bytes provenance/treaties.yaml declares
+#      (URL + SHA-256 per treaty) and fail loudly on a mismatch, so the runner
+#      reads what the published artefacts were built from. Without this step
+#      every treaty is "published but unbuilt" and the control would be red by
+#      construction - the mistake the corpus workflow was born fixing.
+#   2. rebuild - run scripts/build.py over the fetched bytes and fail if the
+#      committed treaty.json/treaty.md differ from what a clean rebuild
+#      produces. A hand edit to a published artefact, or a source the
+#      publisher swapped, fails here naming the file that moved.
+#   3. tests - the fidelity contract itself: bytes match the register, every
+#      page present in order, rebuild moves nothing, gaps declared with
+#      reasons, markdown rendered not edited, text is the PDF's own extraction.
+#
+# Step 2 cannot see the other half of the failure: a reader that reclassified
+# a layout would rebuild the artefacts wrong in the same way, so the rebuild
+# agrees with itself. The tests read the source PDF independently (page by
+# page, byte for byte) and catch that class - same split as the corpus'
+# drift control and its p05 block-reader gate.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: "43 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: library-drift-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  control:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install the builder
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Fetch the sources
+        # The source PDFs are never committed (see provenance/treaties.yaml);
+        # this downloads exactly the registered bytes and hash-verifies each
+        # one, so the runner reads what the artefacts were built from.
+        run: python scripts/fetch.py
+
+      - name: Is the published library in step with the reader?
+        # Rebuild every artefact from the fetched bytes and fail when the
+        # committed files differ - the drift control, one file per treaty.
+        id: drift
+        run: |
+          set +e
+          python scripts/build.py
+          build_status=$?
+          git diff --exit-code -- treaties/
+          diff_status=$?
+          status=$(( build_status != 0 ? build_status : diff_status ))
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+          if [ "$status" != "0" ]; then
+            echo "::error::the rebuild moved committed artefacts (see the diff above); the published library is out of step with its sources"
+          fi
+          exit 0
+
+      - name: Does every difference name a file and a page, never silence?
+        # The rebuild above only reports "files moved". This check runs the
+        # contract's own tests against the live fetch, so a failure carries
+        # the treaty id, the page and the rule that broke.
+        run: python -m pytest -q
+
+      - name: The run is red while the library is out of step
+        if: always() && steps.drift.outputs.status != '0'
+        run: |
+          echo "::error::scripts/build.py reports the library out of step with its sources; the rebuild diff is above"
+          exit 1
