@@ -66,3 +66,47 @@ treaties:
           rendered from treaty.json by scripts/build.py, never edited by hand.
     status: published
     gaps: []
+  - id: no-uk-2013
+    parties:
+      - Norway
+      - United Kingdom of Great Britain and Northern Ireland
+    title: >-
+      Convention between the United Kingdom of Great Britain and Northern
+      Ireland and the Kingdom of Norway for the Avoidance of Double Taxation
+      and the Prevention of Fiscal Evasion with respect to Taxes on Income and
+      on Capital Gains, signed 14 March 2013
+    source:
+      url: https://assets.publishing.service.gov.uk/media/5a75bb72e5274a43682998b9/norway-dtc-inforce_-_in_force.pdf
+      publisher: HM Revenue & Customs / GOV.UK
+      sha256: ccc70ace3f94a8ceb3a3ac733857cea7a558d3b50ee71992a908b429dcfe7bd7
+      retrieved: 2026-10-11
+      verified: 2026-10-11
+      languages:
+        - English
+      pages: 28
+    rights:
+      status: open_licence
+      redistribute: false
+      note: >-
+        Published on GOV.UK, whose pages carry the Open Government Licence
+        v3.0 and (c) Crown copyright in the site footer; the PDF itself states
+        no separate licence, so the licence is recorded as the publisher's own
+        stated terms rather than the file's. The PDF is still fetched, hashed
+        and read locally rather than committed. Verified against the direct
+        link published on the GOV.UK "Norway: tax treaties" page on
+        2026-10-11, where the publisher lists it as "2013 UK-Norway Double
+        Taxation Convention - in force".
+    produces:
+      - artefact: treaties/no-uk-2013/treaty.json
+        how: >-
+          scripts/build.py reads the fetched PDF as one unit per page, each
+          anchored to its page number, and writes treaty.json;
+          tests/test_treaty.py rebuilds it and compares byte for byte. The
+          document is the publisher's "in force" text: page 1 is the note of
+          entry into force and effect dates, and the convention's own text
+          follows.
+      - artefact: treaties/no-uk-2013/treaty.md
+        how: >-
+          rendered from treaty.json by scripts/build.py, never edited by hand.
+    status: published
+    gaps: []

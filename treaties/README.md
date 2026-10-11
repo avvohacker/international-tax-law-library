@@ -10,8 +10,9 @@ treaties/<id>/
   treaty.md    — the readable view, rendered from treaty.json, never edited
 ```
 
-One treaty here: `uk-us-2001/` (US–UK income tax convention, 2001). A
-treaty appears only together with its `provenance/treaties.yaml` entry
+Two treaties here: `uk-us-2001/` (US–UK income tax convention, 2001) and
+`no-uk-2013/` (UK–Norway convention, 2013). A treaty appears only together
+with its `provenance/treaties.yaml` entry
 (source hash, rights note, gaps); the directory without the registry entry
 — or the entry without the directory — is an error, not a half-published
 treaty.

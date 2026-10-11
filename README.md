@@ -8,8 +8,8 @@ people actually work on, contributed as they go.
 Three layers, three repositories, one contract of fidelity:
 
 * **corpus** ([international-tax-law-corpus](https://github.com/avvohacker/international-tax-law-corpus)) — the citable base: UN Model 2017 and 2021 plus the OECD MLI framework. Closed scope, byte-reproducible, every unit traceable to its page. **State**: both editions and every view built, anti-drift control in CI.
-* **library (this repository)** — the bilateral treaties people work on, contributed as they go: each treaty enters with the same fidelity contract (source hash, page-anchored units, declared gaps, no invention). **State**: contract walking — first treaty in (`uk-us-2001`).
-* **mcp** ([international-tax-law-mcp](https://github.com/avvohacker/international-tax-law-mcp)) — the query mind over corpus plus library: treaty questions answered from the data (as-modified verdicts), never from guesses. **State**: scaffold — the server lands once this repository walks.
+* **library (this repository)** — the bilateral treaties people work on, contributed as they go: each treaty enters with the same fidelity contract (source hash, page-anchored units, declared gaps, no invention). **State**: contract walking — two treaties in (`uk-us-2001` US–UK 2001, `no-uk-2013` UK–Norway 2013).
+* **mcp** ([international-tax-law-mcp](https://github.com/avvohacker/international-tax-law-mcp)) — the query mind over corpus plus library: treaty questions answered from the data (as-modified verdicts), never from guesses. **State**: server — five tools answering from the corpus and this library, including the as-modified chain of MLI Articles for `no-uk-2013`, and refusing when they cannot; tested over the protocol in CI.
 
 ## Roadmap
 
@@ -18,12 +18,13 @@ Three layers, three repositories, one contract of fidelity:
 2. **Library walks** (now) — bilateral treaties enter one by one under the
    same fidelity contract; the first is in (`uk-us-2001`) as the proof, with
    fetch + rebuild + contract tests in CI.
-3. **MCP walks** (after) — the server over corpus plus library: as-modified
-   verdicts, citations to units, and silence where the data is silent.
+3. **MCP walks** (now) — this server is built: five tools over corpus plus
+   library, as-modified verdicts, citations to units, and silence where the
+   data is silent.
 4. **OECD Model** (later) — a corpus extension once 1–3 walk; excluded today
    on scope grounds only.
 
-## Current state: the contract is walking, with one treaty
+## Current state: the contract is walking, with two treaties
 
 First treaty in, as the proof that the contract works: the **US–UK income
 tax convention** (signed 24 July 2001, protocol of 19 July 2002) — the most
@@ -37,6 +38,19 @@ Built from its bytes, one unit per page anchored to the page it came from:
 `treaty.md`, rendered from the JSON and never edited by hand. Byte-identical
 when rebuilt. The PDF itself is not committed: the hash is the contract
 (`.gitignore` keeps `sources/` out).
+
+Second treaty in, and the first between **two** states that are both parties
+to the MLI: the **UK–Norway convention of 2013** (signed 14 March 2013, in
+force 17 December 2013, `no-uk-2013`). Its publisher is HM Revenue & Customs
+on GOV.UK, whose pages carry the Open Government Licence v3.0 and Crown
+copyright; the PDF itself states no separate licence, so the register records
+the publisher's stated terms rather than the file's, and keeps the file
+uncommitted as always. 28 pages, 0 gaps.
+
+It is here for a reason that is about the layer above: a treaty between two
+MLI parties is the only kind the query server can answer `modified` for, and
+meet its own chain of Articles against. With one treaty whose two parties are
+not both MLI parties, that whole branch of the verdict had nothing to run on.
 
 The proof is the tests, not the claim (`pytest -q`, 9 tests):
 
