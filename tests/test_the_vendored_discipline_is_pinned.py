@@ -32,7 +32,7 @@ from vendor.discipline import board, machine_traces
 ROOT = Path(__file__).resolve().parent.parent
 VENDORED = ROOT / "vendor" / "discipline"
 PIN = ROOT / "provenance" / "vendored-discipline.yaml"
-SOURCE_REPOSITORY = "avvohacker/international-tax-law-corpus"
+SOURCE_REPOSITORY = "https://github.com/avvohacker/international-tax-law-corpus"
 SOURCE_PATH = "harness/discipline"
 
 
