@@ -67,11 +67,16 @@ The proof is the tests, not the claim (`pytest -q`, 9 tests):
 Run it:
 
 ```bash
-python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
+python3 -m venv .venv && .venv/bin/pip install -r requirements.txt   # 3.11 or newer
 .venv/bin/python scripts/fetch.py    # download + hash-verify the source PDFs
 .venv/bin/python scripts/build.py    # page-anchored units -> treaties/
 .venv/bin/python -m pytest -q        # the contract, as tests
 ```
+
+CI runs those three steps on the pinned 3.13 and again on the floor (3.11) and
+on the newest release (3.14), because `requires-python = ">=3.11"` is a claim
+and a claim nobody executes is an opinion: the fetch, the rebuild and the
+contract have to hold on the oldest interpreter a reader may still have.
 
 ## The fidelity contract (what every treaty must bring)
 
