@@ -1,0 +1,19 @@
+# This repository has no installable distribution: the artefacts under
+# `treaties/` are built by `scripts/build.py` and checked by `tests/`, and both
+# run from a checkout. What every repository in this family declares in its
+# `pyproject.toml` is the floor the code is written and verified against, so
+# that the three floors can be read in one place and compared.
+#
+# The pinned toolchain the artefacts were actually built and verified with is
+# in `requirements.txt`, which CI installs - kept there rather than duplicated
+# here, because a second copy of a pin is a second thing to drift.
+
+[project]
+name = "international-tax-law-library"
+version = "0.1.0"
+description = "Page-anchored copies of individual tax treaties, with every page's hash declared, so that no statement about a treaty is made from a page nobody can re-read"
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
