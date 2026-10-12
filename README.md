@@ -52,7 +52,8 @@ MLI parties is the only kind the query server can answer `modified` for, and
 meet its own chain of Articles against. With one treaty whose two parties are
 not both MLI parties, that whole branch of the verdict had nothing to run on.
 
-The proof is the tests, not the claim (`pytest -q`, 9 tests):
+The proof is the tests, not the claim (`pytest -q`; `docs/status.md` is the
+generated board and counts what is published):
 
 * every registry entry carries the full contract (hash, dates, rights,
   declared gaps, `redistribute: false`);
@@ -71,12 +72,24 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt   # 3.11 or n
 .venv/bin/python scripts/fetch.py    # download + hash-verify the source PDFs
 .venv/bin/python scripts/build.py    # page-anchored units -> treaties/
 .venv/bin/python -m pytest -q        # the contract, as tests
+.venv/bin/python scripts/status.py --write   # regenerate docs/status.md
 ```
 
 CI runs those three steps on the pinned 3.13 and again on the floor (3.11) and
 on the newest release (3.14), because `requires-python = ">=3.11"` is a claim
 and a claim nobody executes is an opinion: the fetch, the rebuild and the
 contract have to hold on the oldest interpreter a reader may still have.
+
+Two more controls hold claims that no rebuild can see, and both fail rather
+than complain: `tests/test_the_floor_runs_in_ci.py` reads
+`.github/workflows/library-drift.yml` and fails if the floor `pyproject.toml`
+declares is not one of the interpreters the workflow runs, and
+`tests/test_no_machine_traces.py` reads every file git tracks and fails if one
+names a local path, the directory this checkout lives in, or the account name on
+the machine that ran the check. `docs/status.md` is the board generated from the
+register and the artefacts — the treaty table, the pages anchored, the
+declared gaps — and `tests/test_the_status_is_current.py` fails the moment the
+committed board and the command that writes it disagree.
 
 ## The fidelity contract (what every treaty must bring)
 

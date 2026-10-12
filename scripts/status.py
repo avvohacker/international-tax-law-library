@@ -1,0 +1,201 @@
+#!/usr/bin/env python3
+"""The status board: what this library holds, and what it does not.
+
+The README makes claims - two treaties, every page anchored, no silent blanks -
+and a claim in a document is worth exactly as much as the command that produces
+it. So this file *is* the document generator: `docs/status.md` is written by
+`python scripts/status.py --write`, and `tests/test_the_status_is_current.py`
+fails when the committed file is not what the command writes.
+
+Two rules, both of them lessons about claim honesty:
+
+1. every number in the document is read from the repository at the moment of
+   writing - the register's own declarations and the artefacts themselves -
+   never copied by hand into a sentence;
+2. a treaty that is declared and not built is printed as such, with the reason
+   the register gives, rather than left out of a table that then looks complete.
+
+The project's name comes from `pyproject.toml` and never from the directory the
+board was rendered in: a clone called `library` in CI and something else on a
+desk must produce the same document, or the document describes the machine.
+"""
+
+import argparse
+import sys
+import tomllib
+from pathlib import Path
+
+import yaml
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+import ci  # noqa: E402 - the path above is what makes this importable here
+
+ROOT = Path(__file__).resolve().parent.parent
+REGISTER = Path("provenance") / "treaties.yaml"
+PROJECT_NAME = "international-tax-law-library"
+
+
+def project_name(root: Path) -> str:
+    """The project's own name, read from the manifest at ``root``.
+
+    Not ``root.name``: a clone called ``library`` in CI, ``my-library`` on one
+    desk and ``library-2`` on another would print three different boards from
+    one repository, and none of the three says which project it is about.
+    """
+    try:
+        manifest = tomllib.loads((root / "pyproject.toml").read_text(encoding="utf-8"))
+        return str(manifest["project"]["name"])
+    except (OSError, KeyError, TypeError, tomllib.TOMLDecodeError):
+        return PROJECT_NAME
+
+
+def declared(root: Path) -> list[dict]:
+    """The register's entries, or a stated failure - never an empty board.
+
+    A board that printed "0 treaties" because the register could not be read
+    would be the most convincing lie in the repository: the library would look
+    empty rather than broken.
+    """
+    register = root / REGISTER
+    if not register.is_file():
+        raise FileNotFoundError(f"{REGISTER} is missing: there is no register to report")
+    document = yaml.safe_load(register.read_text(encoding="utf-8")) or {}
+    entries = document.get("treaties")
+    if not entries:
+        raise ValueError(f"{REGISTER} declares no treaties")
+    return entries
+
+
+def built(root: Path, treaty_id: str) -> dict | None:
+    """What the artefacts of one treaty say about themselves, if they exist."""
+    artefact = root / "treaties" / treaty_id / "treaty.json"
+    if not artefact.is_file():
+        return None
+    payload = yaml.safe_load(artefact.read_text(encoding="utf-8"))
+    return {
+        "pages": payload.get("page_count"),
+        "gaps": payload.get("gaps_declared"),
+        "units": len(payload.get("units") or []),
+    }
+
+
+def rows(root: Path, entries: list[dict]) -> list[dict]:
+    """One row per declared treaty, from the register and the artefacts."""
+    out: list[dict] = []
+    for entry in entries:
+        treaty_id = str(entry["id"])
+        source = entry.get("source") or {}
+        artefacts = built(root, treaty_id)
+        out.append({
+            "id": treaty_id,
+            "status": str(entry.get("status") or "undeclared"),
+            "parties": list(entry.get("parties") or []),
+            "publisher": str(source.get("publisher") or "-"),
+            "reason": str(entry.get("reason") or "").strip(),
+            "built": artefacts is not None,
+            "pages": artefacts["pages"] if artefacts else None,
+            "gaps": artefacts["gaps"] if artefacts else None,
+        })
+    return out
+
+
+def interpreters_line(root: Path) -> str:
+    """What the CI runs, with the floor held against it rather than assumed."""
+    versions = sorted(ci.interpreters(root), key=ci.order)
+    floor = ci.floor(root)
+    state = "among them" if floor in versions else "**not** among them"
+    return (f"- interpreters CI runs: {', '.join(versions) or 'none named'} "
+            f"(the floor `{floor}` declared in `pyproject.toml` is {state})")
+
+
+def render(root: Path | None = None) -> str:
+    root = Path(root) if root else ROOT
+    entries = declared(root)
+    table = rows(root, entries)
+    anchored = sum(row["pages"] or 0 for row in table)
+    gaps = sum(row["gaps"] or 0 for row in table)
+    published = [row for row in table if row["built"]]
+    redistributable = sum(1 for entry in entries
+                          if (entry.get("rights") or {}).get("redistribute") is True)
+
+    lines: list[str] = []
+    add = lines.append
+    add("# Status")
+    add("")
+    add("Generated by `python scripts/status.py --write`. Do not edit by hand: "
+        "every number below is computed from the repository at the moment of "
+        "writing.")
+    add("")
+    add(f"- project: `{project_name(root)}`")
+    add(f"- treaties: {len(table)} declared, {len(published)} published, "
+        f"{len(table) - len(published)} declared not built "
+        f"(`{REGISTER}` says which and why)")
+    add(f"- pages: {anchored} anchored, {gaps} declared gaps")
+    add(f"- sources: {len(table)} registered, {redistributable} of them "
+        f"redistributable (`rights.redistribute`): the PDFs are fetched, hashed "
+        f"and read locally (`scripts/fetch.py`), never committed")
+    add(interpreters_line(root))
+    add("")
+
+    add("## Treaties")
+    add("")
+    add("| treaty | status | parties | pages | gaps | publisher |")
+    add("| --- | --- | --- | --- | --- | --- |")
+    for row in table:
+        pages = row["pages"] if row["built"] else "-"
+        gaps = row["gaps"] if row["built"] else "-"
+        add(f"| `{row['id']}` | {row['status']} | {'; '.join(row['parties'])} | "
+            f"{pages} | {gaps} | {row['publisher']} |")
+    add("")
+
+    pending = [row for row in table if not row["built"]]
+    if pending:
+        add("### Declared not built, with the reason")
+        add("")
+        for row in pending:
+            add(f"- **`{row['id']}`** — {row['status']}: "
+                f"{row['reason'] or 'the register gives no reason'}")
+        add("")
+
+    add("## Commands")
+    add("")
+    add("```bash")
+    add(".venv/bin/python scripts/fetch.py          # download + hash-verify the sources")
+    add(".venv/bin/python scripts/build.py          # page-anchored units -> treaties/")
+    add(".venv/bin/python scripts/status.py --write # regenerate this file")
+    add("```")
+    return "\n".join(lines) + "\n"
+
+
+def write(root: Path | None = None, out: Path | None = None) -> Path:
+    root = Path(root) if root else ROOT
+    target = Path(out) if out else root / "docs" / "status.md"
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(render(root), encoding="utf-8")
+    return target
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(
+        prog="python scripts/status.py",
+        description="The status board: the library's claims, computed.")
+    parser.add_argument("--write", action="store_true",
+                        help="write docs/status.md instead of printing it")
+    parser.add_argument("--root", default=None,
+                        help="render another checkout (used by the tests)")
+    arguments = parser.parse_args(argv)
+    root = Path(arguments.root) if arguments.root else ROOT
+    try:
+        if arguments.write:
+            print(f"written: {write(root)}")
+        else:
+            sys.stdout.write(render(root))
+    except (FileNotFoundError, ValueError) as error:
+        print(f"international-tax-law-library: {error}", file=sys.stderr)
+        return 1
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
