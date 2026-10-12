@@ -1,156 +1,50 @@
-"""What the CI actually runs, read from the workflows.
+"""The workflow reader, re-exported from the shared discipline.
 
-`pyproject.toml` declares the floor this repository is written against
-(`requires-python = ">=3.11"`), and a claim nobody executes is an opinion: on
-the floor a reader may still have, the fetch, the rebuild and the contract have
-to hold as well, so `.github/workflows/library-drift.yml` runs all three again
-on the newest release too. Two readers need that list - the test that holds the
-floor and the workflow together, and the status board that prints both - so it
-is read here once, rather than twice with two chances to disagree.
+`vendor/discipline/ci.py` is the one implementation - the corpus' own, copied
+verbatim and pinned in `provenance/vendored-discipline.yaml`. This module stays
+because the README's commands run as `python scripts/status.py` and the tests
+import the reader as `ci`, and a second import path is much cheaper than a second
+copy of the rules. A second copy is what this used to be: the three repositories
+each read their own workflows, the copies had drifted into two different APIs,
+and nothing compared them.
 
-Nothing here interprets YAML beyond what a `python-version` value is, and a
-value that is not a quoted `X.Y` string is reported rather than coerced: YAML
-reads the unquoted `3.10` as the number 3.1, and an interpreter whose last
-digit vanished is worse than a missing one, because it compares equal to
-nothing.
+The extra path entry is the repository root, because when this module is imported
+by `python scripts/status.py` the process' path begins at `scripts/`, and
+`vendor/` is a directory beside it rather than inside it.
 """
-from __future__ import annotations
-
-import re
-import tomllib
+import sys
 from pathlib import Path
 
-import yaml
+ROOT = Path(__file__).resolve().parent.parent
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
-VERSION = re.compile(r"\d+\.\d+")
-NAME = re.compile(r"^\d+\.\d+$")
-EXPRESSION = re.compile(r"\$\{\{")
+from vendor.discipline.ci import (  # noqa: E402,F401 - re-exported on purpose
+    EXPRESSION,
+    NAME,
+    VERSION,
+    checked_out_repositories,
+    floor,
+    interpreters,
+    matrix_interpreters,
+    order,
+    runs_pytest,
+    suspect,
+    values_for,
+    workflows,
+)
 
-
-def workflows(root: Path) -> list[Path]:
-    """The workflow files of this repository, in name order."""
-    return sorted((root / ".github" / "workflows").glob("*.y*ml"))
-
-
-def order(name: str) -> tuple[int, ...]:
-    """A version as numbers, so that 3.9 sorts below 3.10."""
-    found = VERSION.search(name)
-    if not found:
-        return (0,)
-    return tuple(int(part) for part in found.group(0).split("."))
-
-
-def floor(root: Path) -> str:
-    """The version `requires-python` names, as `X.Y`."""
-    manifest = tomllib.loads((root / "pyproject.toml").read_text(encoding="utf-8"))
-    requires = str(manifest["project"]["requires-python"])
-    found = VERSION.search(requires)
-    if not found:
-        raise ValueError(
-            f"pyproject.toml declares requires-python = {requires!r}, which "
-            f"names no version: a floor nobody can read is not a floor")
-    return found.group(0)
-
-
-def _values(node) -> list:
-    """Every raw value under a `python-version` key, wherever it sits."""
-    if isinstance(node, dict):
-        found: list = []
-        for key, value in node.items():
-            if key == "python-version":
-                found.extend(value if isinstance(value, list) else [value])
-            else:
-                found.extend(_values(value))
-        return found
-    if isinstance(node, list):
-        found = []
-        for item in node:
-            found.extend(_values(item))
-        return found
-    return []
-
-
-def _matrix_values(node) -> list:
-    """Every raw value under a `strategy.matrix`'s `python-version`."""
-    if isinstance(node, dict):
-        found: list = []
-        for key, value in node.items():
-            if key == "matrix" and isinstance(value, dict):
-                found.extend(_values(value))
-            else:
-                found.extend(_matrix_values(value))
-        return found
-    if isinstance(node, list):
-        found = []
-        for item in node:
-            found.extend(_matrix_values(item))
-        return found
-    return []
-
-
-def _named(values: list) -> list[str]:
-    """The values that name an interpreter, in order, de-duplicated.
-
-    Only an `X.Y` string names one: `${{ matrix.python-version }}` names the
-    matrix, whose legs are counted from the matrix itself, and an unquoted
-    number or a channel name names something this reader cannot compare. Those
-    are left to `suspect`, which reports them - dropping them here without a
-    word would be the silent gap this module exists to close.
-    """
-    names: list[str] = []
-    for value in values:
-        if isinstance(value, str) and NAME.match(value) and value not in names:
-            names.append(value)
-    return names
-
-
-def _documents(root: Path):
-    for path in workflows(root):
-        yield path, yaml.safe_load(path.read_text(encoding="utf-8"))
-
-
-def interpreters(root: Path) -> list[str]:
-    """Every interpreter the workflows name, in file order, de-duplicated."""
-    found: list[str] = []
-    for _, document in _documents(root):
-        for name in _named(_values(document)):
-            if name not in found:
-                found.append(name)
-    return found
-
-
-def matrix_interpreters(root: Path) -> list[str]:
-    """The interpreters of the `strategy.matrix` legs only.
-
-    The floor is meant to be verified by a matrix leg - a job that runs the
-    whole control - and not by a scalar `python-version` in some step: a check
-    that only looked for the string would stay green the day that job is
-    deleted, which is the state this module exists to refuse.
-    """
-    found: list[str] = []
-    for _, document in _documents(root):
-        for name in _named(_matrix_values(document)):
-            if name not in found:
-                found.append(name)
-    return found
-
-
-def suspect(root: Path) -> list[str]:
-    """The `python-version` values that are neither a version nor a reference.
-
-    YAML reads the unquoted `3.10` as the number 3.1: a name that lost its last
-    digit is not a version anybody wrote, and it compares equal to nothing. A
-    name this reader cannot read at all (`nightly`, an unquoted suffix) is
-    reported here too, rather than dropped from the list the floor is checked
-    against - a version nobody can name is a check nobody has.
-    """
-    out: list[str] = []
-    for _, document in _documents(root):
-        for value in _values(document):
-            if isinstance(value, str) and (NAME.match(value)
-                                           or EXPRESSION.search(value)):
-                continue
-            rendered = value if isinstance(value, str) else repr(value)
-            if rendered not in out:
-                out.append(rendered)
-    return out
+__all__ = [
+    "EXPRESSION",
+    "NAME",
+    "VERSION",
+    "checked_out_repositories",
+    "floor",
+    "interpreters",
+    "matrix_interpreters",
+    "order",
+    "runs_pytest",
+    "suspect",
+    "values_for",
+    "workflows",
+]
