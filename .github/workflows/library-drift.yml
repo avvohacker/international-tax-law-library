@@ -87,3 +87,39 @@ jobs:
         run: |
           echo "::error::scripts/build.py reports the library out of step with its sources; the rebuild diff is above"
           exit 1
+
+  compatibility:
+    # The two ends `requires-python = ">=3.11"` claims, beside the pinned 3.13
+    # the control above runs on: the floor a reader may still have and the newest
+    # release a reader who just upgraded gets. Both re-fetch the registered
+    # bytes, rebuild every treaty and run the contract, so a syntax or a stdlib
+    # call that only the pinned interpreter has fails here rather than in a
+    # user's checkout. The sources are a few hundred kilobytes, so the second
+    # and third fetches cost nothing worth avoiding by sharing a cache.
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.14"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install the builder
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Fetch the sources
+        run: python scripts/fetch.py
+
+      - name: Is the published library in step, on this interpreter?
+        run: |
+          python scripts/build.py
+          git diff --exit-code -- treaties/
+
+      - name: Does the contract hold, on this interpreter?
+        run: python -m pytest -q

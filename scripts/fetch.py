@@ -32,7 +32,10 @@ def sha256_of(path: Path) -> str:
 
 
 def download(url: str, destination: Path) -> None:
-    request = urllib.request.Request(url, headers={"User-Agent": "itlc-library/0"})
+    # The library's own name, as the corpus' fetcher sends its own: a server
+    # reading its logs should see which project asked, not a third abbreviation.
+    request = urllib.request.Request(
+        url, headers={"User-Agent": "international-tax-law-library/1.0"})
     last_error: Exception | None = None
     for attempt in range(1, RETRIES + 1):
         try:
