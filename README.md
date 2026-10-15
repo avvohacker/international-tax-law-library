@@ -3,13 +3,26 @@
 Second layer of the corpus-library-MCP trilogy: the bilateral tax treaties
 people actually work on, contributed as they go.
 
-## Where this fits: corpus, library, mcp
+## Where this fits: two repositories, and the folder that answers
 
-Three layers, three repositories, one contract of fidelity:
+Two repositories under one contract of fidelity, and the server that queries
+both is committed inside the corpus:
 
-* **corpus** ([international-tax-law-corpus](https://github.com/avvohacker/international-tax-law-corpus)) — the citable base: UN Model 2017 and 2021 plus the OECD MLI framework (mapping, signatories and parties, country positions). Closed scope, byte-reproducible, every unit traceable to its page. **State**: both editions and every view built, anti-drift control in CI.
+* **corpus** ([international-tax-law-corpus](https://github.com/avvohacker/international-tax-law-corpus)) — the citable base: UN Model 2017 and 2021 plus the OECD MLI framework (mapping, signatories and parties, country positions). Closed scope, byte-reproducible, every unit traceable to its page. **State**: both editions and every view built, anti-drift control in CI; it also holds the server, under [`mcp/`](https://github.com/avvohacker/international-tax-law-corpus/tree/main/mcp).
 * **library (this repository)** — the bilateral treaties people work on, contributed as they go, under the same fidelity contract (source hash, page-anchored units, declared gaps, no invention). Invitation: as you work a treaty, put it here. **State**: contract walking — two treaties in (`uk-us-2001` US–UK 2001, `no-uk-2013` UK–Norway 2013).
-* **mcp** ([international-tax-law-mcp](https://github.com/avvohacker/international-tax-law-mcp)) — the query mind over corpus plus library: treaty questions answered from the data (as-modified verdicts, with the chain of MLI Articles behind each one), never from guesses. **State**: server — seven tools answering from the two checkouts and refusing when they cannot; tested over the protocol in CI.
+* **the server, [`mcp/`](https://github.com/avvohacker/international-tax-law-corpus/tree/main/mcp) in the corpus** — not a repository of its own but a folder of the corpus: the query mind over corpus plus library, treaty questions answered from the data (as-modified verdicts, with the chain of MLI Articles behind each one), never from guesses. It was built in a standalone repository of its own, which is private now and is not where a reader should be pointed — the folder is its home. **State**: six tools answering from the two checkouts and refusing when they cannot; it is run by the corpus' workflows, over the protocol, and it installs from the folder alone, with no clone: `pip install "git+https://github.com/avvohacker/international-tax-law-corpus.git@main#subdirectory=mcp"`.
+
+### What GitHub's own MCP server gives you, and what that folder adds
+
+GitHub ships an MCP server that reads repositories: a file's content (through the contents API, which returns content in full up to 1 MB per file), directory listings, trees, blame, commits, code search. It reads and writes files; it does not execute them. No tool in it runs Python or a shell command, nothing committed in a repository can give it one, and it is not configured from inside a repository either — so pointed at the corpus it can hand a model every byte it needs, and the verdict still has to be reconstructed from those bytes by the model itself. What an agent should *do* with those bytes is stated in an `AGENTS.md`, which MCP clients read into the model's context ([the corpus' own](https://github.com/avvohacker/international-tax-law-corpus/blob/main/AGENTS.md) is the one this family keeps); no file in a repository is read by GitHub's MCP server as a rule, and there is none that could be.
+
+The folder is a **second** server, not a plugin for GitHub's and not a set of instructions to it. An MCP host can be given both at once, and each answers what it is for. Reaching the one that computes verdicts takes three things, and only the first is an install:
+
+1. **one command, no clone** — the `pip install` above, which needs Python 3.11 or newer on the machine that will run it;
+2. **the two checkouts, named** — `ITL_CORPUS_ROOT` and `ITL_LIBRARY_ROOT`, because the server owns no data and answers only from what it is pointed at: this repository is passed as the second of the two, never copied into the server as code;
+3. **a host that starts it** — MCP over stdio means the client launches the process when a question is asked, so it runs on the machine where those two checkouts are, while the client is asking. Nothing is precomputed and nothing is cached, which is why no answer can be stale.
+
+A reader who installs nothing keeps everything GitHub already gives — every file, read in full — and with it the cases where the same files read to a different answer. What they do not get is a computed verdict, the citation chain that travels with it, or a refusal.
 
 ## Roadmap
 
@@ -18,9 +31,12 @@ Three layers, three repositories, one contract of fidelity:
 2. **Library walks** (now) — bilateral treaties enter one by one under the
    same fidelity contract; the first is in (`uk-us-2001`) as the proof, with
    fetch + rebuild + contract tests in CI.
-3. **MCP walks** (now) — this server is built: seven tools over corpus plus
-   library, as-modified verdicts, citations to units, and silence where the
-   data is silent.
+3. **MCP walks** (now) — the server is built and lives in the corpus, under
+   `mcp/`: six tools over corpus plus library, as-modified verdicts, citations
+   to units, and silence where the data is silent. It is a folder of the corpus
+   rather than a repository of its own — the standalone one it was built in is
+   private and is not the way in — and this library is one of the two checkouts
+   it reads (`ITL_LIBRARY_ROOT`), never a copy of its code in here.
 4. **OECD Model** (later) — a corpus extension once 1–3 walk; excluded today
    on scope grounds only.
 

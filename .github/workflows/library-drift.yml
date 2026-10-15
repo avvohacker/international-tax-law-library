@@ -137,25 +137,23 @@ jobs:
     # So the control is the corpus': `scripts/discipline-drift.py`, read from the
     # corpus' own checkout, takes the three and compares the copies byte for byte
     # against their pins - then *runs* the rule for each repository under the
-    # identity its own CI gives it, which is the half a hash cannot check. The job
-    # installs PyYAML and nothing else: the comparison reads text, not artefacts,
-    # and the two checkouts are the whole cost.
+    # identity its own CI gives it, which is the half a hash cannot check. The
+    # third repository is not checked out beside this one: the server is committed
+    # inside the corpus, under `mcp/`, and the control reads it where it stands -
+    # a checkout of the standalone repository it was built in would be a second
+    # copy of rules that already travel, from a repository that is private now.
+    # The job installs PyYAML and nothing else: the comparison reads text, not
+    # artefacts, and the two checkouts are the whole cost.
     runs-on: ubuntu-latest
     steps:
       - name: Check out this repository
         uses: actions/checkout@v4
 
-      - name: Check out the corpus, which owns the shared discipline
+      - name: Check out the corpus, which owns the discipline and holds the server
         uses: actions/checkout@v4
         with:
           repository: avvohacker/international-tax-law-corpus
           path: corpus
-
-      - name: Check out the server
-        uses: actions/checkout@v4
-        with:
-          repository: avvohacker/international-tax-law-mcp
-          path: mcp
 
       - uses: actions/setup-python@v5
         with:
@@ -168,4 +166,7 @@ jobs:
           pip install "PyYAML>=6.0"
 
       - name: Does this copy still say what the corpus says?
-        run: python corpus/scripts/discipline-drift.py --corpus corpus --library . --mcp mcp
+        # The server is read where it is committed, in the corpus checkout above:
+        # the folder carries the same `vendor/discipline/` copy this repository
+        # does, and the control compares both against the corpus' own.
+        run: python corpus/scripts/discipline-drift.py --corpus corpus --library . --mcp corpus/mcp
