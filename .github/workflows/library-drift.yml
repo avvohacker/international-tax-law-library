@@ -138,7 +138,7 @@ jobs:
     # corpus' own checkout, takes the three and compares the copies byte for byte
     # against their pins - then *runs* the rule for each repository under the
     # identity its own CI gives it, which is the half a hash cannot check. The
-    # third repository is not checked out beside this one: the server is committed
+    # third layer is not checked out beside this one: the server is committed
     # inside the corpus, under `mcp/`, and the control reads it where it stands -
     # a checkout of the standalone repository it was built in would be a second
     # copy of rules that already travel, from a repository that is private now.
