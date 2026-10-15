@@ -3,9 +3,15 @@
 [![library-drift](https://github.com/avvohacker/international-tax-law-library/actions/workflows/library-drift.yml/badge.svg)](https://github.com/avvohacker/international-tax-law-library/actions/workflows/library-drift.yml)
 [![discipline-drift](https://github.com/avvohacker/international-tax-law-library/actions/workflows/discipline-drift.yml/badge.svg)](https://github.com/avvohacker/international-tax-law-library/actions/workflows/discipline-drift.yml)
 [![revendor-discipline](https://github.com/avvohacker/international-tax-law-library/actions/workflows/revendor-discipline.yml/badge.svg)](https://github.com/avvohacker/international-tax-law-library/actions/workflows/revendor-discipline.yml)
+[![python](https://img.shields.io/badge/python-3.11%2B-blue)](pyproject.toml)
+[![license: all rights reserved](https://img.shields.io/badge/license-all%20rights%20reserved-lightgrey)](LICENSE)
 
-Second layer of the corpus-library-MCP trilogy: the bilateral tax treaties
-people actually work on, contributed as they go.
+Second layer of the family, and one of its two repositories: the bilateral tax
+treaties people actually work on, contributed as they go. The family is the
+[`corpus`](https://github.com/avvohacker/international-tax-law-corpus) — the rules
+and the server it holds — this repository, the treaties, and the folder
+[`mcp/`](https://github.com/avvohacker/international-tax-law-corpus/tree/main/mcp),
+which answers from both.
 
 ## Where this fits: two repositories, and the folder that answers
 

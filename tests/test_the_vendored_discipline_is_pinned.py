@@ -4,16 +4,20 @@
 what may not be committed about a machine, how a workflow is read, what a status
 board owes a reader - copied verbatim, and `provenance/vendored-discipline.yaml`
 says which bytes traveled and where they came from. Two ways that can stop being
-true, and both are checked here:
+true, and all three are checked here:
 
   * the copy can be edited in place, which silently gives this repository a rule
     of its own - the state the three copies were in when a hand comparison found
     them three wordings, three exemption lists and two different readers;
   * the pin can be left behind by a copy that moved, in which case the register
-    describes a repository that no longer exists.
+    describes a repository that no longer exists;
+  * the pin's own claim can be about the wrong kind of thing: a `source_commit`
+    that names a branch or a tag is not a pin, because that ref moves under the
+    checkout meant to reproduce it, so the register would say which bytes
+    travelled only for the moment it was written.
 
-Either is a red run rather than a surprise. The third way cannot be checked from
-here, and is checked where the other checkouts are: whether this copy still
+Any of them is a red run rather than a surprise. The one way that cannot be
+checked from here is checked where the other checkouts are: whether this copy still
 equals the corpus' *current* rules is what the `discipline` job of this
 repository's workflow asks against the corpus' own working copy, and
 `test_the_workflow_runs_the_control_that_asks_it` is what stops that job from
@@ -23,6 +27,7 @@ The rule is then *run* here, not only hashed: equal bytes are not the same as a
 rule that passes.
 """
 import hashlib
+import re
 from pathlib import Path
 
 import yaml
@@ -34,6 +39,9 @@ VENDORED = ROOT / "vendor" / "discipline"
 PIN = ROOT / "provenance" / "vendored-discipline.yaml"
 SOURCE_REPOSITORY = "https://github.com/avvohacker/international-tax-law-corpus"
 SOURCE_PATH = "harness/discipline"
+# What a pin may name as the commit it came from: a git object id, and nothing
+# else. `main` is not one, and a tag is not one either.
+COMMIT = re.compile(r"^[0-9a-f]{40}([0-9a-f]{24})?$")
 
 
 def digest(data: bytes) -> str:
@@ -73,8 +81,14 @@ def drift(copies: dict[str, bytes], pin: dict) -> list[str]:
     if pin.get("source_path") != SOURCE_PATH:
         problems.append(f"the pin names the source path {pin.get('source_path')!r}, "
                         f"and the discipline lives at {SOURCE_PATH}")
-    if not pin.get("source_commit"):
+    stated_commit = pin.get("source_commit")
+    if not stated_commit:
         problems.append("the pin does not say which commit was vendored")
+    elif not COMMIT.match(str(stated_commit)):
+        problems.append(
+            f"the pin names {stated_commit!r} as the commit it was vendored from, "
+            f"and that is a ref rather than a commit: a branch or a tag moves "
+            f"under the checkout meant to reproduce these bytes")
     return problems
 
 
@@ -106,6 +120,15 @@ def test_the_checker_can_fail():
     unfixed = dict(pinned())
     unfixed["files"] = {key: "0" * 64 for key in (pinned().get("files") or {})}
     assert drift(here, unfixed), "a pin whose hashes are all wrong was accepted"
+
+    moved = dict(pinned())
+    moved["source_commit"] = "main"
+    assert drift(here, moved), (
+        "a pin naming a branch instead of a commit was accepted: it describes "
+        "whatever that branch held when it was read, and not these bytes")
+    tagged = dict(pinned())
+    tagged["source_commit"] = "v1.0.0"
+    assert drift(here, tagged), "a pin naming a tag instead of a commit was accepted"
 
 
 def test_the_board_rule_holds_here():
