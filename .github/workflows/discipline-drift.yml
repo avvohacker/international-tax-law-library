@@ -1,0 +1,91 @@
+name: discipline-drift
+
+# The rules the three layers share - what may not be committed about a machine,
+# how a workflow is read, what a status board owes a reader - are not this
+# repository's own: they are the corpus', vendored verbatim into
+# `vendor/discipline/` and pinned in `provenance/vendored-discipline.yaml`. This
+# workflow is the control that answers the one question the pin cannot: is this
+# copy still the corpus' own rules, or has the corpus moved on and left this
+# checkout holding an older one?
+#
+# It is a workflow of its own, and that is a decision about the signal rather than
+# about the work. It used to be a job of `library-drift`, so a copy that had been
+# left behind turned that badge red - and `library-drift` answers a different
+# question, about this repository's own artefacts and the sources they were built
+# from, whose repair is a rebuild here rather than a re-vendor there. Two
+# questions, two badges: a red `discipline-drift` means one thing (the corpus has
+# moved; re-vendor, or read its change and decide), and nothing else goes red
+# with it.
+#
+# The weekly schedule is here for the case no push can signal: the corpus can move
+# under this checkout while nothing here changes at all, and then only a clock
+# notices. Nothing opens a repair by itself - `revendor-discipline` is manual on
+# purpose, because re-vendoring writes bytes this repository does not own, and two
+# writers of one pin is the drift the pin exists to refuse.
+#
+# What runs below is the corpus' own control, unchanged: the comparison reads two
+# checkouts and no artefacts, so the job installs PyYAML and nothing else, and the
+# drift it refuses is invisible from inside either repository alone.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: "43 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: discipline-drift-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  discipline:
+    # This repository runs rules it did not write: the machine-trace rule (F14 in
+    # the corpus), the reader that holds the floor in `library-drift` against the
+    # workflow above it, and the rule the status board obeys. They live in
+    # `vendor/discipline/`, copied verbatim from the corpus and pinned in
+    # `provenance/vendored-discipline.yaml`, because the three repositories had
+    # grown three copies of the same rules and nothing compared them - the copies
+    # of the reader had drifted into two different APIs, and the copy of the
+    # machine-trace rule failed its own CI on a line that names nobody.
+    #
+    # So the control is the corpus': `scripts/discipline-drift.py`, read from the
+    # corpus' own checkout, takes the three and compares the copies byte for byte
+    # against their pins - then *runs* the rule for each repository under the
+    # identity its own CI gives it, which is the half a hash cannot check. The
+    # third layer is not checked out beside this one: the server is committed
+    # inside the corpus, under `mcp/`, and the control reads it where it stands -
+    # a checkout of the standalone repository it was built in would be a second
+    # copy of rules that already travel, from a repository that is private now.
+    # The job installs PyYAML and nothing else: the comparison reads text, not
+    # artefacts, and the two checkouts are the whole cost.
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out this repository
+        uses: actions/checkout@v4
+
+      - name: Check out the corpus, which owns the discipline and holds the server
+        uses: actions/checkout@v4
+        with:
+          repository: avvohacker/international-tax-law-corpus
+          path: corpus
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+
+      - name: Install what the reader needs, and nothing else
+        run: |
+          python -m pip install --upgrade pip
+          pip install "PyYAML>=6.0"
+
+      - name: Does this copy still say what the corpus says?
+        # The server is read where it is committed, in the corpus checkout above:
+        # the folder carries the same `vendor/discipline/` copy this repository
+        # does, and the control compares both against the corpus' own.
+        run: python corpus/scripts/discipline-drift.py --corpus corpus --library . --mcp corpus/mcp
