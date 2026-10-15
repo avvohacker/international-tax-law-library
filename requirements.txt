@@ -1,3 +1,17 @@
+# The rules this family shares, installed rather than copied.
+#
+# `vendor/discipline/` and `provenance/vendored-discipline.yaml` are gone, and
+# with them the copy that could drift from the corpus: there is nothing here to
+# compare, because there is nothing here. This line is the whole statement of
+# which rules travel, and it names a **tag** - a branch would move under a
+# checkout, which is the freeze the pinned copy used to catch only after the fact
+# (`tests/test_the_discipline_is_a_pinned_dependency.py` refuses one).
+#
+# The tag is published by the corpus, which owns the package; this branch merges
+# when it exists, and until then `pip install -r requirements.txt` stops here,
+# which is what a draft branch should do.
+itl-discipline @ git+https://github.com/avvohacker/international-tax-law-corpus.git@discipline-v1.0.0#subdirectory=discipline
+
 PyMuPDF==1.26.5
 pytest==8.4.2
 PyYAML==6.0.3

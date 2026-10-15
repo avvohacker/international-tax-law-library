@@ -83,21 +83,20 @@ repository as an argument.
   locally under `sources/` (gitignored), and the hash in the register is the
   contract: `python scripts/fetch.py` downloads exactly the registered bytes and
   fails on a mismatch.
-* **Vendored copies are never edited either.** `vendor/discipline/` is the
-  corpus' own implementation of the rules the family shares — what may not be
-  committed about a machine, how a workflow is read, and what a status board owes
-  a reader — copied verbatim and pinned in `provenance/vendored-discipline.yaml`.
-  Both halves are written by the corpus' `scripts/vendor-discipline.py` and never
-  by hand: re-vendor, never patch a copy. The manual `revendor-discipline`
-  workflow runs that writer from the corpus' own main and opens a pull request
-  with the result, and `library-drift`'s `discipline` job is what stays red until
-  it is merged.
+* **The shared rules are a dependency, and they are pinned to a tag.** The rules
+  this family shares — what may not be committed about a machine, how a workflow
+  is read, and what a status board owes a reader — come from the corpus'
+  `itl-discipline` package, named in `requirements.txt` at a version tag and
+  installed rather than copied: there is no copy in here to drift, and no pin to
+  be left behind. Do not vendor it again, do not fork a rule locally, and do not
+  relax that requirement to a branch — a branch moves under a checkout, which is
+  the defect the pinned copy used to catch only after the fact. If a rule needs to
+  change, it changes in the corpus and arrives here as a new tag.
 * **No machine traces.** No absolute path of the machine that built anything, no
   user name, no host name, in code, comments, documents, fixtures or commit
-  messages (invariant F14). The rule is implemented once, in
-  `vendor/discipline/machine_traces.py`, and the tests run it under the CI account
-  as well, because neither the account nor the checkout name is visible from a
-  desk.
+  messages (invariant F14). The rule is implemented once, in the `itl-discipline`
+  package, and the tests run it under the CI account as well, because neither the
+  account nor the checkout name is visible from a desk.
 * **Prose here is dense on purpose.** It states what is known, by what check, and
   what is not: do not soften a limitation into a promise, and do not delete a
   stated defect.
@@ -109,15 +108,15 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 .venv/bin/python scripts/fetch.py           # download + hash-verify the sources
 .venv/bin/python scripts/build.py           # page-anchored units -> treaties/
                                             # (a clean rebuild must move nothing)
-.venv/bin/python -m pytest -q               # the contract, as tests
+.venv/bin/python -m pytest -q               # the contract, and the shared rules
 .venv/bin/python scripts/status.py --write  # regenerate docs/status.md
-
-# the rules the three layers share, run from a corpus checkout beside this one,
-# which is how this repository's own `discipline` job runs it:
-cd ../international-tax-law-corpus
-python scripts/discipline-drift.py --corpus . \
-      --library ../international-tax-law-library --mcp mcp
 ```
+
+The rules the three layers share travel with that install: `pytest -q` is where
+they are run — the machine-trace rule under this repository's CI identity as well
+as a desk's, and the board rule against `docs/status.md`. There is no copy of them
+in here to re-vendor, and `requirements.txt` is the one place that says which
+version of them this checkout runs.
 
 A red check is a finding, not an obstacle: say which fact moved and why, or say
 that the check could not run. Both are better than a green run that checked

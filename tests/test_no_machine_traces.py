@@ -6,14 +6,13 @@ directory. The class is wider than the artefacts a pipeline writes, so this file
 holds every file git tracks in the library to it: the register, the page-anchored
 artefacts, the scripts and these tests.
 
-The rule itself is not written here. It is `vendor/discipline/machine_traces.py`,
-copied verbatim from the corpus and pinned in
-`provenance/vendored-discipline.yaml`, because the three repositories kept three
-copies of it and the copies had drifted apart before anything compared them. The
-copy this file replaced is also why the sharing is worth the plumbing: the
-compatibility jobs found it red on itself, because its positive control wrote a
-machine root whole and the scan then read its own sample as a leak - a defect
-invisible from a desk, and invisible in the other two copies of the same rule.
+The rule itself is not written here. It is the corpus' `itl-discipline`, installed
+at the tag `requirements.txt` names, because this family kept three copies of it
+and the copies had drifted apart before anything compared them. The copy this file
+replaced is also why the sharing is worth the plumbing: the compatibility jobs
+found it red on itself, because its positive control wrote a machine root whole
+and the scan then read its own sample as a leak - a defect invisible from a desk,
+and invisible in the other two copies of the same rule.
 
 What stays here is the library's own half of the rule: the samples a treaty
 catalogue uses (a path written with a placeholder is not a path to a machine),
@@ -21,7 +20,7 @@ and the identity this repository's CI runs under, reproduced below on a desk.
 """
 from pathlib import Path
 
-from vendor.discipline import machine_traces
+from itl_discipline import machine_traces
 
 ROOT = Path(__file__).resolve().parent.parent
 
