@@ -17,11 +17,27 @@ name: discipline-drift
 # moved; re-vendor, or read its change and decide), and nothing else goes red
 # with it.
 #
-# The weekly schedule is here for the case no push can signal: the corpus can move
-# under this checkout while nothing here changes at all, and then only a clock
-# notices. Nothing opens a repair by itself - `revendor-discipline` is manual on
-# purpose, because re-vendoring writes bytes this repository does not own, and two
-# writers of one pin is the drift the pin exists to refuse.
+# Which pushes and pull requests it answers is deliberately narrowed to the paths
+# that can change its answer, and the narrowing is safe only because of what the
+# other workflow already does. The job compares the copy with the corpus and reads,
+# of this repository, the floor in `pyproject.toml`, the workflows' interpreters
+# and matrix, and the project's name; so it runs when one of those moves -
+# `vendor/discipline/`, the pin, `pyproject.toml`, or any workflow, the last
+# because a changed matrix is a changed comparison and because an edit to this file
+# is an edit to the control. Everything else - a treaty, a script, a document, the
+# generated board, a test - cannot change what this job compares, and it does not
+# escape a check by not triggering it here: `library-drift` runs the whole suite on
+# every push and every pull request, and the suite is where the machine-trace rule
+# over every tracked file and the board rule are run.
+#
+# Two triggers are not narrowed, and cannot be. The weekly schedule is there for
+# the case no push can signal: the corpus can move under this checkout while
+# nothing here changes at all, and then only a clock notices. The manual run is
+# there for the same reason read the other way - somebody knows the corpus has
+# moved and wants the answer now. Nothing opens a repair by itself:
+# `revendor-discipline` is manual on purpose, because re-vendoring writes bytes
+# this repository does not own, and two writers of one pin is the drift the pin
+# exists to refuse.
 #
 # What runs below is the corpus' own control, unchanged: the comparison reads two
 # checkouts and no artefacts, so the job installs PyYAML and nothing else, and the
@@ -30,7 +46,17 @@ name: discipline-drift
 on:
   push:
     branches: [main]
+    paths:
+      - "vendor/discipline/**"
+      - "provenance/vendored-discipline.yaml"
+      - "pyproject.toml"
+      - ".github/workflows/**"
   pull_request:
+    paths:
+      - "vendor/discipline/**"
+      - "provenance/vendored-discipline.yaml"
+      - "pyproject.toml"
+      - ".github/workflows/**"
   schedule:
     - cron: "43 6 * * 1"
   workflow_dispatch:
