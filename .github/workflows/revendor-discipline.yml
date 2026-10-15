@@ -1,0 +1,131 @@
+name: revendor-discipline
+
+# The repair for the one failure `library-drift`'s `discipline` job reports: the
+# copy under `vendor/discipline/` no longer equals the corpus'
+# `harness/discipline/`, or the pin that says which bytes travelled no longer
+# matches the copy. The control is that job, and it goes red for everybody the
+# moment the corpus changes; this is not a second control, it is the hand that
+# re-vendors, and it runs only when a human asks for it.
+#
+# Why manual and not on every push: re-vendoring is an edit to bytes this
+# repository does not own, and its whole claim is that the pin says which bytes
+# travelled. Left to run on its own it would be a second writer of the same
+# files, and two writers of one pin is the drift the pinned copy exists to
+# refuse. A red control is a decision for a person — is the corpus' change
+# wanted here, now? — and this workflow is what the person runs after deciding.
+#
+# It re-vendors with the corpus' own writer, from the corpus' own `main`, and
+# opens a pull request rather than pushing to `main`, so the pin and the bytes it
+# claims are read before they are trusted. The request is opened with
+# `GITHUB_TOKEN`, and a request opened that way does not by itself start the
+# workflows of this repository: the runs that judge this change are the ones a
+# human asks for, or the ones the next push brings.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: revendor-discipline
+  cancel-in-progress: false
+
+jobs:
+  revendor:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out this repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check out the corpus, which owns the discipline
+        # Only the writer and the discipline travel back from here, so this
+        # checkout is shallow: `scripts/vendor-discipline.py` reads its own
+        # `harness/discipline/` and asks `git` for the commit it is on, and
+        # neither needs the corpus' history.
+        uses: actions/checkout@v4
+        with:
+          repository: avvohacker/international-tax-law-corpus
+          path: corpus
+          fetch-depth: 1
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+
+      - name: Install what the writer needs, and nothing else
+        run: |
+          python -m pip install --upgrade pip
+          pip install "PyYAML>=6.0"
+
+      - name: Is there anything to re-vendor?
+        # The same comparison the control runs: the copies byte for byte, and
+        # each copy against the pin it declares. It writes nothing. The status is
+        # recorded rather than turned into a failure here, so the repair below can
+        # run, and the run goes red at the end if it was needed.
+        id: drift
+        run: |
+          set +e
+          python corpus/scripts/vendor-discipline.py --check --into .
+          status=$?
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+          if [ "$status" = "0" ]; then
+            echo "the copy matches the corpus' source and the pin matches the copy"
+          else
+            echo "::notice::the copy has drifted from the corpus; re-vendoring it below"
+          fi
+          exit 0
+
+      - name: Re-vendor from the corpus, and check it again
+        if: steps.drift.outputs.status != '0'
+        run: |
+          python corpus/scripts/vendor-discipline.py --into .
+          python corpus/scripts/vendor-discipline.py --check --into .
+
+      - name: Open the repair pull request
+        if: steps.drift.outputs.status != '0'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          # Only the two halves the writer owns, never `git add -A`: the request
+          # must contain the re-vendoring and nothing else.
+          git add vendor/discipline provenance/vendored-discipline.yaml
+
+          if git diff --cached --quiet; then
+            echo "::error::the check reported drift, and re-vendoring wrote nothing: the two disagree about the copy"
+            exit 1
+          fi
+
+          branch="revendor/discipline-$(date -u +%Y%m%dT%H%M%SZ)"
+          git config user.name  "library-revendor[bot]"
+          git config user.email "library-revendor@users.noreply.github.com"
+          git switch -c "$branch"
+          git commit \
+            -m "Re-vendor the shared discipline from the corpus" \
+            -m "Written by the corpus' own scripts/vendor-discipline.py, from the corpus' main: the copy under vendor/discipline/ and the pin that says which bytes travelled, in one edit and by no hand. Opened by the revendor-discipline workflow; the control that went red is library-drift's discipline job."
+          git push -u origin "$branch"
+          gh pr create \
+            --title "Re-vendor the shared discipline from the corpus" \
+            --body "$(git show --stat --format=%n HEAD)" \
+            --base main \
+            --head "$branch"
+
+      - name: Nothing to re-vendor
+        if: steps.drift.outputs.status == '0'
+        run: echo "vendor/discipline/ is the corpus' source and the pin is its copy; nothing to do"
+
+      - name: The run is red while the copy is out of step
+        # Merging the request is what makes the copy the corpus' again. Until
+        # then this repository is holding bytes it says are not its own, so the
+        # run reports that rather than leaving a green tick over a repair that
+        # has not landed.
+        if: steps.drift.outputs.status != '0'
+        run: |
+          echo "::error::vendor/discipline/ had drifted from the corpus; the re-vendoring and its pull request are above, and this run stays red until it is merged"
+          exit 1
