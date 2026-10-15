@@ -3,8 +3,8 @@
 `vendor/discipline/` is not this repository's own code: it is the corpus' rules -
 what may not be committed about a machine, how a workflow is read, what a status
 board owes a reader - copied verbatim, and `provenance/vendored-discipline.yaml`
-says which bytes traveled and where they came from. Two ways that can stop being
-true, and all three are checked here:
+says which bytes traveled and where they came from. Three ways that can stop
+being true, and all three are checked here:
 
   * the copy can be edited in place, which silently gives this repository a rule
     of its own - the state the three copies were in when a hand comparison found
@@ -128,7 +128,7 @@ def test_the_checker_can_fail():
         "whatever that branch held when it was read, and not these bytes")
     tagged = dict(pinned())
     tagged["source_commit"] = "v1.0.0"
-    assert drift(here, tagged), "a pin naming a tag instead of a commit was accepted"
+    assert drift(here, tagged), "a pin naming a tag was accepted as a pin"
 
 
 def test_the_board_rule_holds_here():
