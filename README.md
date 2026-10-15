@@ -1,5 +1,9 @@
 # international-tax-law-library
 
+[![library-drift](https://github.com/avvohacker/international-tax-law-library/actions/workflows/library-drift.yml/badge.svg)](https://github.com/avvohacker/international-tax-law-library/actions/workflows/library-drift.yml)
+[![discipline-drift](https://github.com/avvohacker/international-tax-law-library/actions/workflows/discipline-drift.yml/badge.svg)](https://github.com/avvohacker/international-tax-law-library/actions/workflows/discipline-drift.yml)
+[![revendor-discipline](https://github.com/avvohacker/international-tax-law-library/actions/workflows/revendor-discipline.yml/badge.svg)](https://github.com/avvohacker/international-tax-law-library/actions/workflows/revendor-discipline.yml)
+
 Second layer of the corpus-library-MCP trilogy: the bilateral tax treaties
 people actually work on, contributed as they go.
 
