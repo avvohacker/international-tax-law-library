@@ -109,7 +109,7 @@ def test_the_checker_can_fail():
 
 
 def test_the_board_rule_holds_here():
-    """The rule the three repositories share about the document they print."""
+    """The rule the three layers share about the document they print."""
     assert board.problems(ROOT) == []
 
 
