@@ -3,21 +3,25 @@
 # Written by `scripts/vendor-discipline.py` in the corpus, at
 # https://github.com/avvohacker/international-tax-law-corpus.
 #
-# That package is the one implementation of what may not be committed about a
-# machine, how a workflow is read, and what a status board owes a reader. The
-# copy under `vendor/discipline/` must be these bytes: a copy that has drifted
-# from the pin is a red test
+# That package is the one implementation of the rules this family shares: what
+# may not be committed about a machine, how a workflow is read, what a status
+# board owes a reader, what a pin says about the copy it holds, and where a
+# document sends a reader who wants the server. The copy under `vendor/discipline/`
+# must be these bytes: a copy that has drifted from the pin is a red test
 # (`tests/test_the_vendored_discipline_is_pinned.py`) rather than a surprise,
 # and `scripts/discipline-drift.py`, run against the corpus' own checkout, is
 # what refuses a copy that has gone back to inventing its own rule.
 #
 # Do not edit either half by hand: re-vendor.
 files:
-  __init__.py: 6a7d71dfb959fa07569ef58ca87f9de9a448d711333cb92a42769e857dfc393b
+  __init__.py: 37925ca673fad9652f8b7d6782abf379bfe7020630ca3911b0a2718a87cb5e1f
   board.py: f3adcfc743e4878888231b528d535a10876fe4f386bcc7774c2cc8f859ecfe76
-  ci.py: 596e6ca944a27765ba9575f9a5d600e82a024db52f5d683c994befe791625c27
-  machine_traces.py: c50faf4616d6d855773c510d978fe307725f604f4ad71cfeea1a95cd3a9d2df0
+  ci.py: b08c758bdb316ef287178d8cbf7ea7acfdc0e2f0e7116a55a7d3e363009a7543
+  documents.py: defc18a806f7d5a2b9698d9b5b57131c9f028d881127981af839c9b8f073bc29
+  holds.py: 183841decd2cfd261fd8dd1d8a6e087b2026fbf65681e661c5a5cd2bd2e1f6b0
+  machine_traces.py: fb51c0b6265c4c420676e30d9128e8b780f59029fcb82de54e0314685e8334e1
+  pin.py: 101d57dcefeffffbf944c863c939c4a5a60b5c2b9b84dce7b9589551cb5746a5
 source: https://github.com/avvohacker/international-tax-law-corpus
-source_commit: 59a16f9596af4a58bf12e87bec4e14b323cbac57
+source_commit: 19f670e49d8f6f543e0f6386c03b2c92a880afa6
 source_path: harness/discipline
-vendored_on: '2026-10-15'
+vendored_on: '2026-10-17'
