@@ -98,6 +98,13 @@ repository as an argument.
   `vendor/discipline/machine_traces.py`, and the tests run it under the CI account
   as well, because neither the account nor the checkout name is visible from a
   desk.
+* **A commit message ends with what changed, not with the tool that changed it.**
+  No footer naming an assistant: no `Generated with …` line, and no co-author
+  trailer carrying a tool's name or a `noreply@` address. This is a request to the
+  agent, not a test, deliberately. A tool that appends one by default has signed
+  something nobody chose to sign: strip it before the commit, and if one is
+  already in the branch you are working on, amend or rebase it away and say what
+  you did.
 * **Prose here is dense on purpose.** It states what is known, by what check, and
   what is not: do not soften a limitation into a promise, and do not delete a
   stated defect.
