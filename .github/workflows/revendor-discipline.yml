@@ -1,18 +1,22 @@
 name: revendor-discipline
 
-# The repair for the one failure `library-drift`'s `discipline` job reports: the
-# copy under `vendor/discipline/` no longer equals the corpus'
-# `harness/discipline/`, or the pin that says which bytes travelled no longer
-# matches the copy. The control is that job, and it goes red for everybody the
-# moment the corpus changes; this is not a second control, it is the hand that
-# re-vendors, and it runs only when a human asks for it.
+# The repair for the one failure `discipline-drift` reports: the copy under
+# `vendor/discipline/` no longer equals the corpus' `harness/discipline/` at the
+# commit the pin names, or the pin that says which bytes travelled no longer
+# matches the copy.
 #
-# Why manual and not on every push: re-vendoring is an edit to bytes this
-# repository does not own, and its whole claim is that the pin says which bytes
-# travelled. Left to run on its own it would be a second writer of the same
-# files, and two writers of one pin is the drift the pinned copy exists to
-# refuse. A red control is a decision for a person — is the corpus' change
-# wanted here, now? — and this workflow is what the person runs after deciding.
+# This workflow is also the only place the corpus' *current* rules are read. The
+# control compares against the pinned commit, on purpose, so that a push into the
+# corpus can never turn this repository red; the price of that is a question no
+# checkout here can answer - has the corpus moved since the pin? - and this
+# workflow pays it. On a clock it asks and reports: a notice, exit 0, nothing
+# written. On a hand it repairs, because re-vendoring writes bytes this repository
+# does not own and its whole claim is that a person decided to take them.
+#
+# Why the repair is not automatic: two writers of one pin is the drift the pin
+# exists to refuse. `discipline-drift` rejects a copy nobody re-vendored, and a
+# scheduled re-vendor would make the same run that answers the question also
+# answer it away.
 #
 # It re-vendors with the corpus' own writer, from the corpus' own `main`, and
 # opens a pull request rather than pushing to `main`, so the pin and the bytes it
@@ -23,8 +27,12 @@ name: revendor-discipline
 
 on:
   workflow_dispatch:
+  schedule:
+    - cron: "43 6 * * 1"
 
 permissions:
+  # Declared for the repair, which only a dispatched run reaches. The weekly run
+  # reads and reports: none of the steps below that write is reached on it.
   contents: write
   pull-requests: write
 
@@ -81,13 +89,13 @@ jobs:
           exit 0
 
       - name: Re-vendor from the corpus, and check it again
-        if: steps.drift.outputs.status != '0'
+        if: github.event_name == 'workflow_dispatch' && steps.drift.outputs.status != '0'
         run: |
           python corpus/scripts/vendor-discipline.py --into .
           python corpus/scripts/vendor-discipline.py --check --into .
 
       - name: Open the repair pull request
-        if: steps.drift.outputs.status != '0'
+        if: github.event_name == 'workflow_dispatch' && steps.drift.outputs.status != '0'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -120,12 +128,25 @@ jobs:
         if: steps.drift.outputs.status == '0'
         run: echo "vendor/discipline/ is the corpus' source and the pin is its copy; nothing to do"
 
+      - name: The corpus has moved since the pin, and nobody has taken the change yet
+        # The weekly run's whole answer, and it is a notice rather than a failure:
+        # the repository is self-consistent, and an upstream move is a decision
+        # for a person, not an error in this checkout. `revendor-discipline` run
+        # by hand is the decision.
+        if: github.event_name == 'schedule' && steps.drift.outputs.status != '0'
+        run: |
+          echo "::notice::the corpus' discipline has moved past the commit this repository pins; run this workflow by hand to open the repair"
+
+      - name: The weekly run found the copy current
+        if: github.event_name == 'schedule' && steps.drift.outputs.status == '0'
+        run: echo "the copy is the corpus' current rules; nothing to report"
+
       - name: The run is red while the copy is out of step
         # Merging the request is what makes the copy the corpus' again. Until
         # then this repository is holding bytes it says are not its own, so the
         # run reports that rather than leaving a green tick over a repair that
         # has not landed.
-        if: steps.drift.outputs.status != '0'
+        if: github.event_name == 'workflow_dispatch' && steps.drift.outputs.status != '0'
         run: |
           echo "::error::vendor/discipline/ had drifted from the corpus; the re-vendoring and its pull request are above, and this run stays red until it is merged"
           exit 1

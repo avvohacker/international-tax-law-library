@@ -4,18 +4,27 @@ name: discipline-drift
 # how a workflow is read, what a status board owes a reader - are not this
 # repository's own: they are the corpus', vendored verbatim into
 # `vendor/discipline/` and pinned in `provenance/vendored-discipline.yaml`. This
-# workflow is the control that answers the one question the pin cannot: is this
-# copy still the corpus' own rules, or has the corpus moved on and left this
-# checkout holding an older one?
+# workflow is the control that holds the pin's own claim against the corpus: are
+# these bytes that commit's rules - not a copy somebody edited in place, and not a
+# copy of some commit the pin does not name?
 #
 # It is a workflow of its own, and that is a decision about the signal rather than
 # about the work. It used to be a job of `library-drift`, so a copy that had been
 # left behind turned that badge red - and `library-drift` answers a different
 # question, about this repository's own artefacts and the sources they were built
 # from, whose repair is a rebuild here rather than a re-vendor there. Two
-# questions, two badges: a red `discipline-drift` means one thing (the corpus has
-# moved; re-vendor, or read its change and decide), and nothing else goes red
-# with it.
+# questions, two badges: a red `discipline-drift` means one thing (this copy is
+# not the bytes its pin declares), and nothing else goes red with it.
+#
+# The corpus it compares against is the commit the pin names, not the corpus'
+# default branch. That is the same rule the pin already states about itself - a
+# branch moves under the checkout meant to reproduce the bytes - applied to the
+# checkout meant to verify them, and it is what makes this run mean one thing:
+# the copy under `vendor/discipline/` is the corpus' rules *as of the commit the
+# pin declares*. A push into the corpus cannot turn this badge red, because
+# nothing this run reads moves with it. Whether the corpus has since moved is a
+# different question, asked on a clock by `revendor-discipline`, which reports it
+# and repairs it only when a person asks.
 #
 # Which pushes and pull requests it answers is deliberately narrowed to the paths
 # that can change its answer, and the narrowing is safe only because of what the
@@ -30,14 +39,10 @@ name: discipline-drift
 # every push and every pull request, and the suite is where the machine-trace rule
 # over every tracked file and the board rule are run.
 #
-# Two triggers are not narrowed, and cannot be. The weekly schedule is there for
-# the case no push can signal: the corpus can move under this checkout while
-# nothing here changes at all, and then only a clock notices. The manual run is
-# there for the same reason read the other way - somebody knows the corpus has
-# moved and wants the answer now. Nothing opens a repair by itself:
-# `revendor-discipline` is manual on purpose, because re-vendoring writes bytes
-# this repository does not own, and two writers of one pin is the drift the pin
-# exists to refuse.
+# There is no schedule here, and that is not an omission: the comparison is
+# against a commit, so a clock could only ask the same question of the same bytes.
+# The manual run stays, for a person who has just re-vendored and wants the answer
+# without pushing.
 #
 # What runs below is the corpus' own control, unchanged: the comparison reads two
 # checkouts and no artefacts, so the job installs PyYAML and nothing else, and the
@@ -57,8 +62,6 @@ on:
       - "provenance/vendored-discipline.yaml"
       - "pyproject.toml"
       - ".github/workflows/**"
-  schedule:
-    - cron: "43 6 * * 1"
   workflow_dispatch:
 
 permissions:
@@ -80,10 +83,10 @@ jobs:
     # machine-trace rule failed its own CI on a line that names nobody.
     #
     # So the control is the corpus': `scripts/discipline-drift.py`, read from the
-    # corpus' own checkout, takes the three and compares the copies byte for byte
-    # against their pins - then *runs* the rule for each repository under the
-    # identity its own CI gives it, which is the half a hash cannot check. The
-    # third layer is not checked out beside this one: the server is committed
+    # corpus' own checkout at the commit the pin names, takes the three and
+    # compares the copies byte for byte against their pins - then *runs* the rule
+    # for each repository under the identity its own CI gives it, which is the half
+    # a hash cannot check. The third layer is not checked out beside this one: the server is committed
     # inside the corpus, under `mcp/`, and the control reads it where it stands -
     # a checkout of the standalone repository it was built in would be a second
     # copy of rules that already travel, from a repository that is private now.
@@ -94,11 +97,27 @@ jobs:
       - name: Check out this repository
         uses: actions/checkout@v4
 
-      - name: Check out the corpus, which owns the discipline and holds the server
+      - name: Read the commit the pin says the copy came from
+        # Not `main`: a pin that names a branch is not a pin, and a comparison
+        # against one describes whatever that branch held the day it was read. The
+        # two checkouts below are the two halves of one claim - these bytes are
+        # that commit's rules - and neither of them moves with an upstream push.
+        id: pin
+        run: |
+          set -euo pipefail
+          commit=$(sed -n 's/^source_commit:[[:space:]]*//p' provenance/vendored-discipline.yaml)
+          if [ -z "$commit" ]; then
+            echo "::error::provenance/vendored-discipline.yaml names no source_commit"
+            exit 1
+          fi
+          echo "commit=$commit" >> "$GITHUB_OUTPUT"
+
+      - name: Check out the corpus at that commit, which owns the discipline and holds the server
         uses: actions/checkout@v4
         with:
           repository: avvohacker/international-tax-law-corpus
           path: corpus
+          ref: ${{ steps.pin.outputs.commit }}
 
       - uses: actions/setup-python@v5
         with:

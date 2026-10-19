@@ -19,7 +19,7 @@ Two repositories under one contract of fidelity, and the server that queries
 both is committed inside the corpus:
 
 * **corpus** ([international-tax-law-corpus](https://github.com/avvohacker/international-tax-law-corpus)) — the citable base: UN Model 2017 and 2021 plus the OECD MLI framework (mapping, signatories and parties, country positions). Closed scope, byte-reproducible, every unit traceable to its page. **State**: both editions and every view built, anti-drift control in CI; it also holds the server, under [`mcp/`](https://github.com/avvohacker/international-tax-law-corpus/tree/main/mcp).
-* **library (this repository)** — the bilateral treaties people work on, contributed as they go, under the same fidelity contract (source hash, page-anchored units, declared gaps, no invention). Invitation: as you work a treaty, put it here. **State**: contract walking — two treaties in (`uk-us-2001` US–UK 2001, `no-uk-2013` UK–Norway 2013).
+* **library (this repository)** — the bilateral treaties people work on, contributed as they go, under the same fidelity contract (source hash, page-anchored units, declared gaps, no invention). Invitation: as you work a treaty, put it here. **State**: complete for the two treaties it holds and frozen there until the next one arrives (`uk-us-2001` US–UK 2001, `no-uk-2013` UK–Norway 2013).
 * **the server, [`mcp/`](https://github.com/avvohacker/international-tax-law-corpus/tree/main/mcp) in the corpus** — not a repository of its own but a folder of the corpus: the query mind over corpus plus library, treaty questions answered from the data (as-modified verdicts, with the chain of MLI Articles behind each one), never from guesses. It was built in a standalone repository of its own, which is private now and is not where a reader should be pointed — the folder is its home. **State**: six tools answering from the two checkouts and refusing when they cannot; it is run by the corpus' workflows, over the protocol, and it installs from the folder alone, with no clone: `pip install "git+https://github.com/avvohacker/international-tax-law-corpus.git@main#subdirectory=mcp"`.
 
 ### What GitHub's own MCP server gives you, and what that folder adds
@@ -38,9 +38,10 @@ A reader who installs nothing keeps everything GitHub already gives — every fi
 
 1. **Corpus walks** (done) — both Model editions and the MLI layer,
    byte-reproducible, anti-drift control in CI.
-2. **Library walks** (now) — bilateral treaties enter one by one under the
-   same fidelity contract; the first is in (`uk-us-2001`) as the proof, with
-   fetch + rebuild + contract tests in CI.
+2. **Library walks** (two in, frozen) — bilateral treaties enter one by one
+   under the same fidelity contract; `uk-us-2001` and `no-uk-2013` are in, with
+   fetch + rebuild + contract tests in CI, and nothing in this repository depends
+   on a push into another one.
 3. **MCP walks** (now) — the server is built and lives in the corpus, under
    `mcp/`: six tools over corpus plus library, as-modified verdicts, citations
    to units, and silence where the data is silent. It is a folder of the corpus
@@ -50,7 +51,26 @@ A reader who installs nothing keeps everything GitHub already gives — every fi
 4. **OECD Model** (later) — a corpus extension once 1–3 walk; excluded today
    on scope grounds only.
 
-## Current state: the contract is walking, with two treaties
+## Current state: two treaties in, and frozen until the next
+
+**Frozen** is a claim about coupling, not about attention: this repository can
+stand for months and nothing a reader runs here turns red because another
+repository moved. Two pins make that true, and both are commits rather than
+branches, because a branch moves under the checkout meant to reproduce the bytes.
+
+* the copy of the shared discipline under `vendor/discipline/` is compared with
+the corpus **at the commit `provenance/vendored-discipline.yaml` names**, never
+with its `main`. `discipline-drift` therefore answers one question — is this copy
+the rules it says it is — and a push into the corpus cannot change its answer;
+* whether the corpus has since moved past that commit is a different question,
+and a clock asks it: `revendor-discipline` runs weekly, reports it as a notice
+and writes nothing. Running that same workflow by hand is the decision to take
+the change, and it opens a pull request rather than pushing, so the pin and the
+bytes it claims are read before they are trusted;
+* the corpus pins this repository the same way, in `mcp/provenance/library.yaml`,
+so a treaty added here does not turn its CI red either. The day the pin there
+should move is the day a person decides the server should answer from the new
+treaty — and the note to do it travels with the treaty, not with a red badge.
 
 First treaty in, as the proof that the contract works: the **US–UK income
 tax convention** (signed 24 July 2001, protocol of 19 July 2002) — the most
@@ -133,6 +153,19 @@ treaty here follows the same pattern.
 ## Invitation
 
 As you work a treaty, put it here — with its hash, its pages, and its gaps.
+
+## Putting a treaty in
+
+Three steps, and the third is the one that reaches into the other repository:
+
+1. register the source in `provenance/treaties.yaml` — URL, SHA-256, retrieval
+date, rights note, what it produces — and fetch it (`scripts/fetch.py`);
+2. build it (`scripts/build.py`), then run the suite and regenerate the board
+(`scripts/status.py --write`); the contract above is what the tests hold;
+3. when the treaty should also be answerable by the server, move the corpus'
+pin: its `mcp/provenance/library.yaml` names the commit this repository should
+be read at, and the library is frozen here until that line is edited there, on
+purpose, by a person.
 
 ## Rights
 
