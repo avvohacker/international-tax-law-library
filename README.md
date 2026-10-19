@@ -71,6 +71,10 @@ bytes it claims are read before they are trusted;
 so a treaty added here does not turn its CI red either. The day the pin there
 should move is the day a person decides the server should answer from the new
 treaty — and the note to do it travels with the treaty, not with a red badge.
+That checkout can also be asked the question directly: `python -m itl_mcp.library_pin`
+there compares the pin with this repository's `main` and answers with an exit
+code — `0` the pin is the head, `1` it is not, `2` the remote could not be asked —
+so nobody has to wait for a clock to know whether this repository has moved on.
 
 First treaty in, as the proof that the contract works: the **US–UK income
 tax convention** (signed 24 July 2001, protocol of 19 July 2002) — the most
