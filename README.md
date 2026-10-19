@@ -160,7 +160,9 @@ As you work a treaty, put it here — with its hash, its pages, and its gaps.
 
 ## Putting a treaty in
 
-Three steps, and the third is the one that reaches into the other repository:
+The walkthrough, with every command and the check that proves each step, is
+[`docs/adding-a-treaty.md`](docs/adding-a-treaty.md). In short — three steps, and
+the third is the one that reaches into the other repository:
 
 1. register the source in `provenance/treaties.yaml` — URL, SHA-256, retrieval
 date, rights note, what it produces — and fetch it (`scripts/fetch.py`);

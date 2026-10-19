@@ -19,3 +19,7 @@ treaty.
 
 Source PDFs live under `sources/` (local only, gitignored) and are never
 committed.
+
+How a treaty enters — from the publisher's file to the corpus' pin, with the
+commands and the checks in order — is [`../docs/adding-a-treaty.md`](../docs/adding-a-treaty.md).
+
